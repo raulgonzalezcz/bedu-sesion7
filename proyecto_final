@@ -1,0 +1,276 @@
+# Proyecto final
+# Paquetes a ayudar
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(GGally)
+library(neuralnet)
+library(nnet)
+
+#https://datos.cdmx.gob.mx/dataset/servicios-para-la-poblacion-en-general/resource/59af003e-042e-4aeb-b4f0-8ca9a6600ec4
+
+#Lectura de datos (NOTA: También hay API, revisar!)
+url_datos <- "https://datos.cdmx.gob.mx/api/3/action/datastore_search?resource_id=59af003e-042e-4aeb-b4f0-8ca9a6600ec4"
+url_datos_sql <- 'https://datos.cdmx.gob.mx/api/3/action/datastore_search_sql?sql=SELECT * from "59af003e-042e-4aeb-b4f0-8ca9a6600ec4"'
+#download.file(url = url_datos_sql, destfile = "./nuevos_datos.csv", mode = "wb")
+datos <- read.csv("./servicios-para-la-poblacion-en-general.csv")
+head(datos)
+summary(datos)
+names(datos)
+
+# Limpieza de datos
+# Valores "" a NA
+datos <- datos %>% mutate_if(is.character, list(~na_if(.,""))) 
+# Data set sin NA
+datos_limpios <- datos[complete.cases(datos[, 4:22]), ]
+datos_limpios <- datos_limpios[datos_limpios$cp_usuaria != -1, ]
+levels(factor(datos_limpios$ocupacion))
+
+# Todo el data set sin NA, valores "" (problema porque ya no muetsra los 3 servicios)
+# quitar -1 
+datos_limpios_2 <- datos %>%
+  # recode empty strings "" by NAs
+  na_if("") %>%
+  # remove NAs
+  na.omit
+
+# Análisis exploratorio
+# Histograma de edad (analizar relación con sexo, escolaridad)
+# Investigar la relacion edad, genero y escolaridad
+# Hora del día en la que es más probable que suceda un caso de violencia
+# 
+datos %>%
+  ggplot() + 
+  aes(edad) +
+  geom_histogram(binwidth = 5, col="black", fill = "blue") + 
+  ggtitle("Histograma de edades por género") +
+  ylab("Frecuencia") +
+  xlab("Mediciones") + 
+  facet_wrap("sexo")
+  theme_light()
+
+datos %>%
+    ggplot() + 
+    aes(edad) +
+    geom_histogram(binwidth = 5, col="black", fill = "blue") + 
+    ggtitle("Histograma de edades por problema registrado") +
+    ylab("Frecuencia") +
+    xlab("Mediciones") + 
+    facet_wrap("servicio") +
+  theme_light()
+
+datos_limpios %>%
+  ggplot() + 
+  aes(edad) +
+  geom_histogram(binwidth = 5, col="black", fill = "blue") + 
+  ggtitle("Histograma de edades por problema registrado") +
+  ylab("Frecuencia") +
+  xlab("Mediciones") + 
+  facet_wrap("servicio") +
+  theme_light()
+
+
+# Histórico de datos: fecha
+class(datos$fecha_alta)
+class(datos$hora_alta)
+
+conta_registro_dia <- count(datos, fecha = datos$fecha_alta)
+conta_registro_hora <- count(datos, hora = datos$hora_alta)
+
+head(conta_registro_dia)
+head(conta_registro_hora)
+
+# Por día
+df_registro_dia <- data.frame(eje_x=as.Date(conta_registro_dia$fecha), n = conta_registro_dia$n)
+head(df_registro_dia)
+# Por hora
+df_registro_hora <- data.frame(eje_x=conta_registro_hora$hora, n = conta_registro_hora$n)
+head(df_registro_hora)
+
+# DF a graficar 
+df_registro <- df_registro_dia
+dim(df_registro)
+names(df_registro)
+
+p <- ggplot(df_registro, aes(x=eje_x, y=n)) + 
+  geom_line( color="blue") + 
+  geom_point() +
+  labs(x = "Fecha", 
+       y = "Acumulado de casos",
+       title = paste("Casos de violencia en México:", 
+                     format(Sys.time(), 
+                            tz="America/Mexico_City", 
+                            usetz=TRUE))) +
+  theme(plot.title = element_text(size=12))  +
+  theme(axis.text.x = element_text(face = "bold", color="#993333" , 
+                                   size = 10, angle = 45, 
+                                   hjust = 1),
+        axis.text.y = element_text(face = "bold", color="#993333" , 
+                                   size = 10, angle = 45, 
+                                   hjust = 1))  # color, ángulo y estilo de las abcisas y ordenadas 
+
+p <- p  + scale_x_date(labels = date_format("%d-%m-%Y")) # paquete scales
+
+p <- p +
+  theme(plot.margin=margin(10,10,20,10), plot.caption=element_text(hjust=1.05, size=10)) +
+  annotate("text", x = df_registro$eje_x[round(dim(df_registro[1])*0.4)], y = max(df_registro$n), colour = "blue", size = 5, label = paste("Última actualización: ", df_registro$n[dim(df_registro)[1]]))
+p
+tail(df_registro)
+class(df_registro$eje_x)
+
+#Sesion 6
+ts_por_mes <- df_registro %>% group_by(fecha = format(eje_x, "%Y-%m")) %>% summarise(frecuencia_llamadas = sum(n))
+head(ts_por_mes)
+
+
+# Sesion 5
+Global.ts <- ts(df_registro$n, st = c(2010,11,1), end = c(2021, 1, 10), fr = 365)
+plot(Global.ts, xlab = "Tiempo", ylab = "Promedio de la suma de goles", main = "Serie del promedio por mes de la suma de goles de partidos disputados",
+     sub = "Serie mensual: Agosto de 2010 a Diciembre de 2019")
+
+plot(df_registro$eje_x, df_registro$n, xlab = "Fecha", 
+     ylab = "Frecuencia de llamadas", pch = 16)
+
+m1 <- lm(df_registro$n~df_registro$eje_x)
+summary(m1)
+
+plot(df_registro$eje_x, df_registro$n, xlab = "Fecha", 
+     ylab = "Frecuencia de llamadas", pch = 16)
+RunSize <- df_registro$eje_x
+RunTime <- df_registro$n
+abline(lsfit(RunSize, RunTime)) # Trazamos la recta de regresión estimada
+mtext(expression(paste('Modelo de regresión lineal simple:',
+                       ' ',
+                       y[i] == beta[0] + beta[1]*x[i] + e[i])),
+      side = 3, adj=1, font = 2)
+
+# Recta de regresión poblacional
+
+text(x = 200, y = 240, expression(paste('Recta de regresión:',
+                                        ' ',
+                                        y[i] == beta[0] + beta[1]*x[i])),
+     adj = 1, font = 2)
+
+
+# Recta de regresión estimada
+
+text(x = 350, y = 180, expression(paste('Recta estimada:',
+                                        ' ',
+                                        hat(y)[i] == hat(beta)[0] + hat(beta)[1]*x[i])),
+     adj = 1, font = 2)
+
+# Recta de regresión estimada
+
+text(x = 350, y = 160, expression(paste('Recta estimada:',
+                                        ' ',
+                                        hat(y)[i] == 149.74770 + 0.25924*x[i])),
+     adj = 1, font = 2)
+
+round(confint(m1, level = 0.95), 3)
+
+
+#21 de marzo de 2020 - Inicio de cuarentena
+
+# Limpieza donde estado_hechos != Null
+#Determinar mejores variables, implementar redes neuronales
+
+# Analizar relación entre algunas propiedades
+
+#1.Establecer datos de entrenamiento y prueba
+
+#(dim(datos_limpios[datos_limpios$servicio == "JURÃ\u008dDICO",])[1] + dim(datos_limpios[datos_limpios$servicio == "MÃ‰DICO",])[1] + dim(datos_limpios[datos_limpios$servicio == "PSICOLÃ“GICO",])[1])
+plt1 <- ggplot(datos_limpios, aes(x = edad, y = ocupacion, colour = as.factor(servicio))) +
+  geom_point(size=3) +
+  ggtitle("Wines")
+plt1
+
+train <- cbind(datos_limpios, class.ind(as.factor(datos_limpios$servicio)))
+# Set labels name
+names(train) <- c(names(datos_limpios),"l1","l2","l3")
+train
+
+datos_jur <- train[train$l1 == 1,]
+datos_med <- train[train$l2 == 1,]
+datos_psi <- train[train$l3 == 1,]
+#minimo_datos <- as.numeric(min(dim(datos_jur)[1], dim(datos_med)[1], dim(datos_psi)[1]))
+minimo_datos <- 800
+indice <- ceiling(minimo_datos * .8)
+
+rows_jur <- sample(nrow(datos_jur))
+rows_med <- sample(nrow(datos_med))
+rows_psi <- sample(nrow(datos_psi))
+
+datos_train <- bind_rows(datos_jur[1:indice-1,], datos_med[1:indice-1,], datos_psi[1:indice-1,])
+names(datos_train)
+
+datos_test <- bind_rows(datos_jur[indice:minimo_datos,], datos_med[indice:minimo_datos,], datos_psi[indice:minimo_datos,])
+names(datos_test)
+
+# Generar factores para valores categóricos
+columnas_a_factor <- c(8,10:15,17:19, 21:22)
+datos_train[columnas_a_factor] <-lapply(datos_train[columnas_a_factor], as.factor) %>% data.frame()
+datos_train[columnas_a_factor] <-lapply(datos_train[columnas_a_factor], as.numeric) %>% data.frame()
+datos_train[columnas_a_factor] <-lapply(datos_train[columnas_a_factor], scale) %>% data.frame()
+head(datos_train)
+names(datos_train)
+
+""" url <- 'http://archive.ics.uci.edu/ml/machine-learning-databases//haberman/haberman.data'
+
+Hab_Data <- read_csv(file = url,
+                     col_names = c('Age', 'Operation_Year', 
+                                   'Number_Pos_Nodes','Survival'))
+head(Hab_Data)
+Hab_Data <- Hab_Data %>%
+  na.omit() %>%
+  mutate(Survival = ifelse(Survival == 2, 0, 1),
+         Survival = factor(Survival))
+head(Hab_Data)
+class(Hab_Data$Age)
+"""
+
+# 4. ML
+
+#set.seed(123)
+new_cols <- c(8,9,10,11,12,30,31,32)
+names(datos_train[new_cols])
+nom <- names(train[new_cols])
+f <- as.formula(paste("l1 + l2 + l3 ~", paste(nom[!nom %in% c("l1","l2","l3")], collapse = " + ")))
+f
+
+nn1 <- neuralnet(f,
+                data = datos_train,
+                hidden = c(6, 2),
+                act.fct = "logistic",
+                linear.output = FALSE,
+                lifesign = "minimal")
+
+plot(nn1)
+plot(nn1, rep = 'best')
+
+# 5. Check performance / compute predictions
+nn1$result.matrix
+
+#Test the resulting output
+columnas_a_factor <- c(8,10:15,17:19, 21:22)
+datos_test[columnas_a_factor] <-lapply(datos_test[columnas_a_factor], as.factor) %>% data.frame()
+datos_test[columnas_a_factor] <-lapply(datos_test[columnas_a_factor], as.numeric) %>% data.frame()
+datos_test[columnas_a_factor] <-lapply(datos_test[columnas_a_factor], scale) %>% data.frame()
+head(datos_test)
+
+pr.nn <- compute(nn1, datos_test)
+head(pr.nn$net.result)
+
+# Sample mean of l1
+original_values <- max.col(datos_test[, 30:32])
+pr.nn_2 <- max.col(pr.nn$net.result)
+mean(pr.nn_2 == original_values)
+
+#Confusion matrix
+results <- data.frame(actual = datos_test$l1, prediction = pr.nn$net.result[,1])
+results
+roundedresults<-sapply(results,round,digits=0)
+roundedresultsdf=data.frame(roundedresults)
+attach(roundedresultsdf)
+table(actual,prediction)
