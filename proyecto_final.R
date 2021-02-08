@@ -11,7 +11,7 @@ library(rccmisc)
 
 #https://datos.cdmx.gob.mx/dataset/servicios-para-la-poblacion-en-general/resource/59af003e-042e-4aeb-b4f0-8ca9a6600ec4
 
-#Lectura de datos (NOTA: Tambi茅n hay API, revisar!)
+#Lectura de datos (NOTA: Tambi脙漏n hay API, revisar!)
 #url_datos <- "https://datos.cdmx.gob.mx/api/3/action/datastore_search?resource_id=59af003e-042e-4aeb-b4f0-8ca9a6600ec4"
 #url_datos_sql <- 'https://datos.cdmx.gob.mx/api/3/action/datastore_search_sql?sql=SELECT * from "59af003e-042e-4aeb-b4f0-8ca9a6600ec4"'
 #download.file(url = url_datos_sql, destfile = "./nuevos_datos.csv", mode = "wb")
@@ -36,16 +36,16 @@ datos_limpios_2 <- datos %>%
   # remove NAs
   na.omit
 
-# An谩lisis exploratorio
-# Histograma de edad (analizar relaci贸n con sexo, escolaridad)
+# An脙隆lisis exploratorio
+# Histograma de edad (analizar relaci脙鲁n con sexo, escolaridad)
 # Investigar la relacion edad, genero y escolaridad
-# Hora del d铆a en la que es m谩s probable que suceda un caso de violencia
+# Hora del d脙颅a en la que es m脙隆s probable que suceda un caso de violencia
 # 
 datos %>%
   ggplot() + 
   aes(edad) +
   geom_histogram(binwidth = 5, col="black", fill = "blue") + 
-  ggtitle("Histograma de edades por g茅nero") +
+  ggtitle("Histograma de edades por g脙漏nero") +
   ylab("Frecuencia") +
   xlab("Mediciones") + 
   facet_wrap("sexo")
@@ -72,7 +72,7 @@ datos_limpios %>%
   theme_light()
 
 
-# Hist贸rico de datos: fecha
+# Hist脙鲁rico de datos: fecha
 class(datos$fecha_alta)
 class(datos$hora_alta)
 
@@ -82,7 +82,7 @@ conta_registro_hora <- count(datos, hora = datos$hora_alta)
 head(conta_registro_dia)
 head(conta_registro_hora)
 
-# Por d铆a
+# Por d脙颅a
 df_registro_dia <- data.frame(eje_x=as.Date(conta_registro_dia$fecha), n = conta_registro_dia$n)
 head(df_registro_dia)
 # Por hora
@@ -99,7 +99,7 @@ p <- ggplot(df_registro, aes(x=eje_x, y=n)) +
   geom_point() +
   labs(x = "Fecha", 
        y = "Acumulado de casos",
-       title = paste("Casos de violencia en M茅xico:", 
+       title = paste("Casos de violencia en M脙漏xico:", 
                      format(Sys.time(), 
                             tz="America/Mexico_City", 
                             usetz=TRUE))) +
@@ -109,13 +109,13 @@ p <- ggplot(df_registro, aes(x=eje_x, y=n)) +
                                    hjust = 1),
         axis.text.y = element_text(face = "bold", color="#993333" , 
                                    size = 10, angle = 45, 
-                                   hjust = 1))  # color, 谩ngulo y estilo de las abcisas y ordenadas 
+                                   hjust = 1))  # color, 脙隆ngulo y estilo de las abcisas y ordenadas 
 
 p <- p  + scale_x_date(labels = date_format("%d-%m-%Y")) # paquete scales
 
 p <- p +
   theme(plot.margin=margin(10,10,20,10), plot.caption=element_text(hjust=1.05, size=10)) +
-  annotate("text", x = df_registro$eje_x[round(dim(df_registro[1])*0.4)], y = max(df_registro$n), colour = "blue", size = 5, label = paste("脷ltima actualizaci贸n: ", df_registro$n[dim(df_registro)[1]]))
+  annotate("text", x = df_registro$eje_x[round(dim(df_registro[1])*0.4)], y = max(df_registro$n), colour = "blue", size = 5, label = paste("脙拧ltima actualizaci脙鲁n: ", df_registro$n[dim(df_registro)[1]]))
 p
 tail(df_registro)
 class(df_registro$eje_x)
@@ -131,22 +131,22 @@ plot(datos_ts,
      ylab = "Frecuencia de llamadas",
      sub = "Serie mensual: Noviembre de 2016 - Enero de 2021")
 
-# Se debe elegir entre modelo aditivo o modelo multiplicativo cuando sea razonable suponer la descomposici髇
+# Se debe elegir entre modelo aditivo o modelo multiplicativo cuando sea razonable suponer la descomposici贸n
 decom_add <- decompose(datos_ts)
 plot(decom_add, xlab = "Tiempo", 
-     sub = "Descomposici髇 de los datos de cantidad llamadas")
+     sub = "Descomposici贸n de los datos de cantidad llamadas")
 
 decom_mul <- decompose(datos_ts, type = "mult")
 plot(decom_mul, xlab = "Tiempo", 
-     sub = "Descomposici髇 de los datos de cantidad llamadas")
+     sub = "Descomposici贸n de los datos de cantidad llamadas")
 
 Tendencia <- decom_add$trend
 Estacionalidad <- decom_add$seasonal
 Aleatorio <- decom_add$random
 
 ts.plot(cbind(Tendencia, Tendencia + Estacionalidad), 
-        xlab = "Tiempo", main = "Datos de Producci髇 de Electricidad", 
-        ylab = "Producci髇 de electricidad", lty = 1:2,
+        xlab = "Tiempo", main = "Datos de Producci贸n de Electricidad", 
+        ylab = "Producci贸n de electricidad", lty = 1:2,
         sub = "Tendencia con efectos estacionales aditivos sobrepuestos")
 
 Tendencia[20] + Estacionalidad[20] + Aleatorio[20]
@@ -156,12 +156,12 @@ Time <- 1:length(datos_ts)
 Imth <- cycle(datos_ts)
 Elec.lm <- lm(log(datos_ts) ~ Time + I(Time^2) + factor(Imth))
 acf(resid(Elec.lm), main = "")
-title(main = "Correlograma de la serie de residuales del modelo de regresi髇",
-      sub = "Serie de producci髇 de electricidad")
+title(main = "Correlograma de la serie de residuales del modelo de regresi贸n",
+      sub = "Serie de producci贸n de electricidad")
 
 plot(resid(Elec.lm), type = "l", main = "", xlab = "", ylab = "")
-title(main = "Serie de residuales del modelo de regresi髇 ajustado",
-      sub = "Serie de producci髇 de electricidad",
+title(main = "Serie de residuales del modelo de regresi贸n ajustado",
+      sub = "Serie de producci贸n de electricidad",
       xlab = "Tiempo",
       ylab = "Residuales")
 
@@ -180,7 +180,7 @@ for(i in 0:2)for(j in 0:2){
 best.order
 acf(resid(best.arma), main = "")
 title(main = "Serie de residuales del modelo ARMA(2, 0) ajustado",
-      sub = "Serie de residuales del modelo de regresi髇 ajustado a los datos de electricidad")
+      sub = "Serie de residuales del modelo de regresi贸n ajustado a los datos de electricidad")
 
 new.time <- seq(length(datos_ts)+1, length = 12)
 new.data <- data.frame(Time = new.time, Imth = rep(1:12, 1))
@@ -190,9 +190,9 @@ elec.pred <- ts(exp(predict.lm + predict.arma$pred), start = 2021, freq = 12)
 
 ts.plot(cbind(datos_ts, elec.pred), lty = 1:2, 
         col = c("blue", "red"), xlab = "Tiempo", 
-        ylab = "Producci髇 de electricidad",
-        main = "Predicci髇 de los datos de producci髇 de electricidad",
-        sub = "Predicci髇 de 36 meses")
+        ylab = "Producci贸n de electricidad",
+        main = "Predicci贸n de los datos de producci贸n de electricidad",
+        sub = "Predicci贸n de 36 meses")
 
 # Sesion 5
 Global.ts <- ts(df_registro$n, st = c(2010,11,1), end = c(2021, 1, 10), fr = 365)
@@ -209,28 +209,28 @@ plot(df_registro$eje_x, df_registro$n, xlab = "Fecha",
      ylab = "Frecuencia de llamadas", pch = 16)
 RunSize <- df_registro$eje_x
 RunTime <- df_registro$n
-abline(lsfit(RunSize, RunTime)) # Trazamos la recta de regresi贸n estimada
-mtext(expression(paste('Modelo de regresi贸n lineal simple:',
+abline(lsfit(RunSize, RunTime)) # Trazamos la recta de regresi脙鲁n estimada
+mtext(expression(paste('Modelo de regresi脙鲁n lineal simple:',
                        ' ',
                        y[i] == beta[0] + beta[1]*x[i] + e[i])),
       side = 3, adj=1, font = 2)
 
-# Recta de regresi贸n poblacional
+# Recta de regresi脙鲁n poblacional
 
-text(x = 200, y = 240, expression(paste('Recta de regresi贸n:',
+text(x = 200, y = 240, expression(paste('Recta de regresi脙鲁n:',
                                         ' ',
                                         y[i] == beta[0] + beta[1]*x[i])),
      adj = 1, font = 2)
 
 
-# Recta de regresi贸n estimada
+# Recta de regresi脙鲁n estimada
 
 text(x = 350, y = 180, expression(paste('Recta estimada:',
                                         ' ',
                                         hat(y)[i] == hat(beta)[0] + hat(beta)[1]*x[i])),
      adj = 1, font = 2)
 
-# Recta de regresi贸n estimada
+# Recta de regresi脙鲁n estimada
 
 text(x = 350, y = 160, expression(paste('Recta estimada:',
                                         ' ',
@@ -245,11 +245,11 @@ round(confint(m1, level = 0.95), 3)
 # Limpieza donde estado_hechos != Null
 #Determinar mejores variables, implementar redes neuronales
 
-# Analizar relaci贸n entre algunas propiedades
+# Analizar relaci脙鲁n entre algunas propiedades
 
 #1.Establecer datos de entrenamiento y prueba
 
-#(dim(datos_limpios[datos_limpios$servicio == "JUR脙\u008dDICO",])[1] + dim(datos_limpios[datos_limpios$servicio == "M脙鈥癉ICO",])[1] + dim(datos_limpios[datos_limpios$servicio == "PSICOL脙鈥淕ICO",])[1])
+#(dim(datos_limpios[datos_limpios$servicio == "JUR脙茠\u008dDICO",])[1] + dim(datos_limpios[datos_limpios$servicio == "M脙茠芒鈧癉ICO",])[1] + dim(datos_limpios[datos_limpios$servicio == "PSICOL脙茠芒鈧揋ICO",])[1])
 plt1 <- ggplot(datos_limpios, aes(x = edad, y = ocupacion, colour = as.factor(servicio))) +
   geom_point(size=3) +
   ggtitle("Wines")
@@ -277,7 +277,7 @@ names(datos_train)
 datos_test <- bind_rows(datos_jur[rows_jur[indice:minimo_datos],], datos_med[rows_med[indice:minimo_datos],], datos_psi[rows_psi[indice:minimo_datos],])
 names(datos_test)
 
-# Generar factores para valores categ贸ricos
+# Generar factores para valores categ脙鲁ricos
 columnas_a_factor <- c("hora_alta","sexo","estado_civil","ocupacion","escolaridad", "estado_usuaria", "tematica1", "estado_hechos")
 datos_train[columnas_a_factor] <-lapply(datos_train[columnas_a_factor], as.factor) %>% data.frame()
 datos_train[columnas_a_factor] <-lapply(datos_train[columnas_a_factor], as.numeric) %>% data.frame()
@@ -368,3 +368,23 @@ for (i in 1:length(vector_40_pruebas)){
 }
 vector_40_pruebas
 #vector_40_pruebas <- sample(4:10, 40, replace=T)
+
+# Intervalos de confianza
+muestra <- c(5,4,5,9,10,7,9,5,9,5,5,10,8,7,7,7,4,5,5,10,6,7,8,8,8,7,8,10,4,6,6,7,10,4,8,9,10,6,9,10) / 10
+head(muestra)
+#YA QUE TENEMOS 40 OBSERVACIONES DE NUESTRA VARIABLE ALEATORIA, PODEMOS CREAR UN
+#INTERVALO DE CONFIANZA A NIVEL 90% PARA LA MEDIA.
+
+sigma_gorro <- sd(muestra)
+mu_gorro    <- mean(muestra)
+n           <- length(muestra)
+
+#Dado que se utiliz贸 una estimaci贸n de la varianza y no
+#la varianza real, entonces nuestra variable pivotal tiene
+#una distribuci贸n t-student con n-1 grados de libertad.
+
+a           <- qt(.05,39)  
+b           <- qt(.95,39)
+conf_int    <- c(0,0)
+conf_int[1] <- mu_gorro - (b*sigma_gorro/sqrt(n))
+conf_int[2] <- mu_gorro - (a*sigma_gorro/sqrt(n))
